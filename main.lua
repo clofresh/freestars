@@ -11,9 +11,9 @@ function love.load()
     ship.mass = 10
     ship.thrust = {
         power = 1000,
-        capacity = 10,
-        max_capacity = 100,
-        burn_rate = 5,
+        capacity = 20,
+        max_capacity = 20,
+        burn_rate = 10,
         recharge_rate = 5
     }
     ship.yaw = 4
