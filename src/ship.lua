@@ -1,3 +1,94 @@
+local Furnace = Class{function(self, mass, capacity, maxCapacity, rechargeRate)
+    self.mass = mass
+    self.capacity = capacity
+    self.maxCapacity = maxCapacity
+    self.rechargeRate = rechargeRate
+end}
+
+function Furnace:recharge(dt)
+    self.capacity = math.min(self.maxCapacity,
+        self.capacity + (self.rechargeRate * dt))
+end
+
+function Furnace:burnEnergy(amount)
+    self.capacity = math.max(0, self.capacity - amount)
+end
+
+function Furnace:update(dt)
+    self:recharge(dt)
+end
+
+local Thruster = Class{function(self, mass, force, cost, cooldown, maxWakeAge)
+    self.mass = mass
+    self.force = force
+    self.cost = cost
+    self.cooldown = cooldown
+    self.maxWakeAge = maxWakeAge
+    self._thrustCooldown = cooldown
+    self._wake = {}
+end}
+
+function Thruster:isReady(equipment)
+    return self._thrustCooldown >= self.cooldown
+    and equipment.furnace
+    and equipment.furnace.capacity > self.cost
+end
+
+function Thruster:thrust(dt, pos, direction, equipment)
+    local force = self.force * direction
+    equipment.furnace:burnEnergy(self.cost)
+    self._thrustCooldown = 0
+    local wake = pos:clone()
+    wake.age = 0
+    table.insert(self._wake, wake)
+    return force
+end
+
+function Thruster:recharge(dt)
+    self._thrustCooldown = math.min(self._thrustCooldown + dt, self.cooldown)
+end
+
+function Thruster:update(dt, ship)
+    if love.keyboard.isDown("d") then
+        ship:turn(1)
+    elseif love.keyboard.isDown("a") then
+        ship:turn(-1)
+    end
+
+    if love.keyboard.isDown("w", "s", "q", "e") and self:isReady(ship.equipment) then
+        local dir
+        if love.keyboard.isDown("w") then
+            dir = vector(0, -1)
+        elseif love.keyboard.isDown("s") then
+            dir = vector(0, 1)
+        elseif love.keyboard.isDown("q") then
+            dir = vector(-1, 0)
+        elseif love.keyboard.isDown("e") then
+            dir = vector(1, 0)
+        end
+
+        if dir then
+            dir:rotate_inplace(ship.r)
+            ship:applyForce(self:thrust(dt, ship.pos, dir, ship.equipment))
+        end
+    else
+        self:recharge(dt)
+    end
+
+    for i, wake in pairs(self._wake) do
+        wake.age = wake.age + dt
+        if wake.age > self.maxWakeAge then
+            self._wake[i] = nil
+        end
+    end
+end
+
+function Thruster:draw()
+    for i, wake in pairs(self._wake) do
+        love.graphics.point(wake.x % SCREEN.x, wake.y % SCREEN.y)
+    end
+end
+
 local Shot = Class{function(self, image, pos, mass, r, launchForce)
     self.image = image
     self.pos = pos
@@ -39,24 +130,73 @@ function Shot:update(dt)
     self.age = self.age + dt
 end
 
-local Ship = Class{function(self, image, pos, mass, energyAttrs, thrustAttrs,
-                            shotAttrs, yaw, r, ox, oy)
+local Cannon = Class{function(self, mass, shotMass, force, cost, cooldown,
+                              maxShotAge)
+    self.mass = mass
+    self.shotMass = shotMass
+    self.force = force
+    self.cost = cost
+    self.cooldown = cooldown
+    self.maxShotAge = maxShotAge
+    self._shotCooldown = cooldown
+    self._shots = {}
+end}
+
+function Cannon:isReady(equipment)
+    return self._shotCooldown >= self.cooldown
+    and equipment.furnace
+    and equipment.furnace.capacity > self.cost
+end
+
+function Cannon:recharge(dt)
+    self._shotCooldown = math.min(self._shotCooldown + dt, self.cooldown)
+end
+
+function Cannon:update(dt, ship)
+    if love.keyboard.isDown(" ") and self:isReady(ship.equipment) then
+        self:shoot(dt, ship.pos, ship.r, ship:directionVector(), ship.equipment)
+    else
+        self:recharge(dt)
+    end
+
+    for i, shot in pairs(self._shots) do
+        shot:update(dt)
+        if shot.age > self.maxShotAge then
+            self._shots[i] = nil
+        end
+    end
+end
+
+function Cannon:draw()
+    for i, shot in pairs(self._shots) do
+        love.graphics.draw(shot.image, shot.pos.x % SCREEN.x,
+            shot.pos.y % SCREEN.y, shot.r, shot.sx, shot.sy, shot.ox, shot.oy,
+            shot.ky, shot.ky)
+    end
+end
+
+function Cannon:shoot(dt, pos, r, dir, equipment)
+    table.insert(self._shots, Shot(images.torpedo, pos:clone(),
+        self.shotMass, r, self.force * dir))
+    self._shotCooldown = 0
+    equipment.furnace:burnEnergy(self.cost)
+end
+
+local Ship = Class{function(self, image, pos, yaw, r, ox, oy, equipment)
     self.image = image
     self.pos = pos
     self.lastPos = pos:clone()
     self.lastDt = nil
-    self.mass = mass
-    self.energyAttrs = energyAttrs
-    self.thrustAttrs = thrustAttrs
-    self._thrustCooldown = thrustAttrs.cooldown
-    self._wake = {}
+    self.mass = 0
+    for i, eq in pairs(equipment) do
+        self.mass = self.mass + eq.mass
+    end
+    self.equipment = equipment
     self.yaw = yaw
     self.r = r
     self.ox = ox
     self.oy = oy
-    self.shotAttrs = shotAttrs
-    self._shotCooldown = shotAttrs.cooldown
-    self._shots = {}
+    self._forces = {}
 end}
 
 function Ship:turn(direction)
@@ -70,33 +210,13 @@ function Ship:directionVector()
 end
 
 function Ship:canThrust()
-    return self._thrustCooldown >= self.thrustAttrs.cooldown
-    and self.energyAttrs.capacity > self.thrustAttrs.cost
+    return self.equipment.thruster
+    and self.equipment.thruster:canThrust(self.equipment)
 end
 
 function Ship:thrust(dt, direction)
-    local force = self.thrustAttrs.force * direction
-    force:rotate_inplace(self.r)
-    self:burnEnergy(self.thrustAttrs.cost)
-    self._thrustCooldown = 0
-    local wake = self.pos:clone()
-    wake.age = 0
-    table.insert(self._wake, wake)
-    return force
-end
-
-function Ship:rechargeThrust(dt)
-    self._thrustCooldown = math.min(self._thrustCooldown + dt,
-                                    self.thrustAttrs.cooldown)
-end
-
-function Ship:rechargeEnergy(dt)
-    self.energyAttrs.capacity = math.min(self.energyAttrs.maxCapacity,
-        self.energyAttrs.capacity + (self.energyAttrs.rechargeRate * dt))
-end
-
-function Ship:burnEnergy(amount)
-    self.energyAttrs.capacity = math.max(0, self.energyAttrs.capacity - amount)
+    return self.equipment.thruster:thrust(dt, self.pos,
+        direction:rotate(self.r), self.equipment.furnace)
 end
 
 function Ship:move(dt, force)
@@ -123,43 +243,42 @@ function Ship:move(dt, force)
     self.pos = vector(newPos.x, newPos.y)
 end
 
-function Ship:canShoot()
-    return self._shotCooldown >= self.shotAttrs.cooldown
-    and self.energyAttrs.capacity > self.shotAttrs.cost
+function Ship:applyForce(force)
+    table.insert(self._forces, force)
 end
 
-function Ship:shoot()
-    table.insert(self._shots, Shot(images.torpedo, self.pos:clone(),
-        self.shotAttrs.mass, self.r,
-        self.shotAttrs.force * self:directionVector()))
-    self._shotCooldown = 0
-    self:burnEnergy(self.shotAttrs.cost)
-end
-
-function Ship:rechargeShot(dt)
-    self._shotCooldown = math.min(self._shotCooldown + dt,
-                                  self.shotAttrs.cooldown)
-end
-
-function Ship:updateShots(dt)
-    for i, shot in pairs(self._shots) do
-        shot:update(dt)
-        if shot.age > self.shotAttrs.maxAge then
-            self._shots[i] = nil
+function Ship:update(dt)
+    for name, eq in pairs(self.equipment) do
+        if eq.update then
+            eq:update(dt, self)
         end
     end
+
+    local totalForce = vector(0, 0)
+    for i, f in pairs(self._forces) do
+        totalForce = totalForce + f
+    end
+
+    self:move(dt, totalForce)
+    self._forces = {}
 end
 
-function Ship:updateWake(dt)
-    for i, wake in pairs(self._wake) do
-        wake.age = wake.age + dt
-        if wake.age > self.thrustAttrs.maxWakeAge then
-            self._wake[i] = nil
+function Ship:draw()
+    for name, eq in pairs(self.equipment) do
+        if eq.draw then
+            eq:draw()
         end
     end
+
+    love.graphics.draw(self.image, self.pos.x % SCREEN.x,
+        self.pos.y % SCREEN.y, self.r,
+        self.sx, self.sy, self.ox, self.oy, self.kx, self.ky)
 end
 
 return {
     Ship = Ship,
-    Shot = Shot
+    Shot = Shot,
+    Furnace = Furnace,
+    Thruster = Thruster,
+    Cannon = Cannon,
 }

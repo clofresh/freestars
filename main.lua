@@ -2,9 +2,10 @@ vector = require 'lib/hump/vector'
 Class = require 'lib/hump/class'
 
 images = {}
+SCREEN = vector(config.screen.width, config.screen.height)
+
 local ship
-local screen = vector(config.screen.width, config.screen.height)
-local Ship = require('src/ship').Ship
+local s = require('src/ship')
 
 function love.load()
     images.ship = love.graphics.newImage("mmrnmhrm.png")
@@ -32,56 +33,22 @@ function love.load()
     local r = 0
     local ox = 13
     local oy = 16
-    ship = Ship(images.ship, vector(100, 100), mass, energyAttrs, thrustAttrs,
-                shotAttrs, yaw, r, ox, oy)
+    local equipment = {
+        furnace  = s.Furnace(1.25, 100, 100, 5),
+        thruster = s.Thruster(0.50, 1000, 1, 0.05, 0.5),
+        cannon   = s.Cannon(0.25, 2, 20000, 4, 0.1, 0.5),
+    }
+    ship = s.Ship(images.ship, vector(100, 100), yaw, r, ox, oy, equipment)
 end
 
 function love.update(dt)
-    if love.keyboard.isDown(" ") and ship:canShoot() then
-        ship:shoot(dt)
-    else
-        ship:rechargeShot(dt)
-    end
-
-    if love.keyboard.isDown("d") then
-        ship:turn(1)
-    elseif love.keyboard.isDown("a") then
-        ship:turn(-1)
-    end
-
-    if love.keyboard.isDown("w", "s", "q", "e") and ship:canThrust() then
-        if love.keyboard.isDown("w") then
-            ship:move(dt, ship:thrust(dt, vector(0, -1)))
-        elseif love.keyboard.isDown("s") then
-            ship:move(dt, ship:thrust(dt, vector(0, 1)))
-        elseif love.keyboard.isDown("q") then
-            ship:move(dt, ship:thrust(dt, vector(-1, 0)))
-        elseif love.keyboard.isDown("e") then
-            ship:move(dt, ship:thrust(dt, vector(1, 0)))
-        end
-    else
-        ship:move(dt)
-        ship:rechargeThrust(dt)
-    end
-
-    ship:rechargeEnergy(dt)
-    ship:updateWake(dt)
-    ship:updateShots(dt)
+    ship:update(dt)
 end
 
 function love.draw()
-    local ship_x = ship.pos.x % screen.x
-    local ship_y = ship.pos.y % screen.y
-    for i, shot in pairs(ship._shots) do
-        love.graphics.draw(shot.image, shot.pos.x % screen.x,
-            shot.pos.y % screen.y, shot.r, shot.sx, shot.sy, shot.ox, shot.oy,
-            shot.ky, shot.ky)
-    end
-    love.graphics.draw(ship.image, ship_x, ship_y, ship.r,
-        ship.sx, ship.sy, ship.ox, ship.oy, ship.kx, ship.ky)
-    for i, wake in pairs(ship._wake) do
-        love.graphics.point(wake.x % screen.x, wake.y % screen.y)
-    end
+    ship:draw()
+    local ship_x = ship.pos.x % SCREEN.x
+    local ship_y = ship.pos.y % SCREEN.y
 
   love.graphics.print(string.format(
 [[Memory: %dKB
@@ -91,7 +58,7 @@ Energy: %f
 math.floor(collectgarbage('count')),
 ship_x,
 ship_y,
-ship.energyAttrs.capacity
+ship.equipment.furnace.capacity
 ), 1, 1)
 
 end
