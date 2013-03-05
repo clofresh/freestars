@@ -1,6 +1,8 @@
 freestars - a spaceship game!
 =============================
 
+![Screenshot](https://raw.github.com/clofresh/freestars/master/screenshot.jpg)
+
 Inspired by Star Control and Asteroids
 
 To play, you'll need the [Löve framework](https://love2d.org/), version 0.8.0 or greater.
