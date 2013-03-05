@@ -30,13 +30,15 @@ end
 
 function Thruster:update(dt, ship)
     local mX, mY = love.mouse.getPosition()
-    local mousePos = vector(mX, mY)
-    local a = (mousePos - vector(ship.pos.x % SCREEN.x, ship.pos.y % SCREEN.y))
-    local b = vector(0, -1)
-    if mX > ship.pos.x % SCREEN.x then
-        ship.r = math.acos((a * b)/(a:len() * b:len()))
-    else
-        ship.r = (2*math.pi) - math.acos((a * b)/(a:len() * b:len()))
+    if mx ~= nil then
+        local mousePos = vector(mX, mY)
+        local a = (mousePos - vector(ship.pos.x % SCREEN.x, ship.pos.y % SCREEN.y))
+        local b = vector(0, -1)
+        if mX > ship.pos.x % SCREEN.x then
+            ship.r = math.acos((a * b)/(a:len() * b:len()))
+        else
+            ship.r = (2*math.pi) - math.acos((a * b)/(a:len() * b:len()))
+        end
     end
     if love.keyboard.isDown("d") then
         ship:turn(1)

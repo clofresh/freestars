@@ -1,8 +1,21 @@
+if aroma then
+    love = aroma
+    love.mouse = {
+        isDown = function() return false end,
+        getPosition = function() return nil, nil end
+    }
+    love.graphics.point = function() end
+end
+
 vector = require 'lib/hump/vector'
 Class = require 'lib/hump/class'
 
 images = {}
-SCREEN = vector(config.screen.width, config.screen.height)
+if config then
+    SCREEN = vector(config.screen.width, config.screen.height)
+else
+    SCREEN = vector(640, 480)
+end
 
 local player
 local ship = require('src/ship')
