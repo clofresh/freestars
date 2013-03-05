@@ -33,7 +33,7 @@ function love.load()
         cost = 4
     }
     local yaw = 4
-    local r = 0
+    local r = 90
     local ox = 13
     local oy = 16
     local equipment = {
@@ -57,11 +57,13 @@ function love.draw()
 [[Memory: %dKB
 Pos: (%d, %d)
 Energy: %f
+R: %f
 ]], 
 math.floor(collectgarbage('count')),
 ship_x,
 ship_y,
-player.equipment.furnace.capacity
+player.equipment.furnace.capacity,
+player.r
 ), 1, 1)
 
 end

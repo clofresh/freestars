@@ -62,7 +62,8 @@ function Cannon:recharge(dt)
 end
 
 function Cannon:update(dt, ship)
-    if love.keyboard.isDown(" ") and self:isReady(ship.equipment) then
+    if (love.keyboard.isDown(" ") or love.mouse.isDown("l"))
+    and self:isReady(ship.equipment) then
         self:shoot(dt, ship.pos, ship.r, ship:directionVector(), ship.equipment)
     else
         self:recharge(dt)
