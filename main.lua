@@ -13,31 +13,12 @@ local thruster = require('src/thruster')
 function love.load()
     images.ship = love.graphics.newImage("mmrnmhrm.png")
     images.torpedo = love.graphics.newImage("torpedo.png")
-    local mass = 2
-    local energyAttrs = {
-        capacity = 100,
-        maxCapacity = 100,
-        rechargeRate = 5
-    }
-    local thrustAttrs = {
-        force = 1000,
-        cost = 1,
-        cooldown = 0.05,
-        maxWakeAge = 0.5
-    }
-    local shotAttrs = {
-        maxAge = 0.5,
-        force = 20000,
-        mass = 2,
-        cooldown = 0.1,
-        cost = 4
-    }
     local yaw = 4
     local r = 90
     local ox = 13
     local oy = 16
     local equipment = {
-        furnace  = furnace.Furnace(1.25, 100, 100, 5),
+        furnace  = furnace.Furnace(1.25, 100, 100, 20),
         thruster = thruster.Thruster(0.50, 1000, 1, 0.05, 0.5),
         cannon   = cannon.Cannon(0.25, 2, 20000, 4, 0.1, 0.5),
     }
