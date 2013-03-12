@@ -64,10 +64,10 @@ function Ship:applyForce(force)
     table.insert(self._forces, force)
 end
 
-function Ship:update(dt)
+function Ship:update(dt, world)
     for name, eq in pairs(self.equipment) do
         if eq.update then
-            eq:update(dt, self)
+            eq:update(dt, world, self)
         end
     end
 
@@ -87,9 +87,26 @@ function Ship:draw()
         end
     end
 
-    love.graphics.draw(self.image, self.pos.x % SCREEN.x,
-        self.pos.y % SCREEN.y, self.r,
+    local shipX = self.pos.x % SCREEN.x
+    local shipY = self.pos.y % SCREEN.y
+
+    love.graphics.draw(self.image, shipX, shipY, self.r,
         self.sx, self.sy, self.ox, self.oy, self.kx, self.ky)
+
+
+    love.graphics.print(string.format(
+[[Memory: %dKB
+Pos: (%d, %d)
+Energy: %f
+R: %f
+]],
+    math.floor(collectgarbage('count')),
+    shipX,
+    shipY,
+    self.equipment.furnace.capacity,
+    self.r
+    ), 1, 1)
+
 end
 
 return {

@@ -59,7 +59,7 @@ function Asteroid:rotate(dt)
     end
 end
 
-function Asteroid:update(dt)
+function Asteroid:update(dt, world)
     local totalForce = vector(0, 0)
     for i, f in pairs(self._forces) do
         totalForce = totalForce + f
@@ -99,9 +99,9 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
     self._asteroids = asteroids
 end}
 
-function AsteroidField:update(dt)
+function AsteroidField:update(dt, world)
     for i, ast in pairs(self._asteroids) do
-        ast:update(dt)
+        ast:update(dt, world)
     end
 end
 

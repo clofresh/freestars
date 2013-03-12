@@ -14,7 +14,7 @@ function Furnace:burnEnergy(amount)
     self.capacity = math.max(0, self.capacity - amount)
 end
 
-function Furnace:update(dt)
+function Furnace:update(dt, world)
     self:recharge(dt)
 end
 

@@ -34,7 +34,7 @@ function Shot:move(dt)
     self.pos = newPos
 end
 
-function Shot:update(dt)
+function Shot:update(dt, world)
     self:move(dt)
     self.age = self.age + dt
 end
@@ -61,7 +61,7 @@ function Cannon:recharge(dt)
     self._shotCooldown = math.min(self._shotCooldown + dt, self.cooldown)
 end
 
-function Cannon:update(dt, ship)
+function Cannon:update(dt, world, ship)
     if (love.keyboard.isDown(" ") or love.mouse.isDown("l"))
     and self:isReady(ship.equipment) then
         self:shoot(dt, ship.pos, ship.r, ship:directionVector(), ship.equipment)
@@ -70,7 +70,7 @@ function Cannon:update(dt, ship)
     end
 
     for i, shot in pairs(self._shots) do
-        shot:update(dt)
+        shot:update(dt, world)
         if shot.age > self.maxShotAge then
             self._shots[i] = nil
         end

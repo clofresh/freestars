@@ -28,7 +28,7 @@ function Thruster:recharge(dt)
     self._thrustCooldown = math.min(self._thrustCooldown + dt, self.cooldown)
 end
 
-function Thruster:update(dt, ship)
+function Thruster:update(dt, world, ship)
     local mX, mY = love.mouse.getPosition()
     local mousePos = vector(mX, mY)
     local a = (mousePos - vector(ship.pos.x % SCREEN.x, ship.pos.y % SCREEN.y))
