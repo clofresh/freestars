@@ -15,7 +15,6 @@ local world
 images = {}
 
 function love.load()
-    world = World()
     images.ship = love.graphics.newImage("mmrnmhrm.png")
     images.torpedo = love.graphics.newImage("torpedo.png")
     local yaw = 4
@@ -29,8 +28,7 @@ function love.load()
     }
     local player = ship.Ship(images.ship, vector(100, 100), yaw, r, ox, oy, equipment)
     local field = asteroid.AsteroidField(vector(1, 1), SCREEN.x, SCREEN.y, 8, 50)
-    world:register(player)
-    world:register(field)
+    world = World(player, field)
 end
 
 function love.update(dt)

@@ -19,6 +19,7 @@ local Asteroid = Class{function(self, pos, velocity, spin, radius, numPoints,
     table.sort(angles)
     self._angles = angles
     self._forces = {}
+    self.color = {255, 255, 255}
 end}
 
 function Asteroid:area()
@@ -59,6 +60,13 @@ function Asteroid:rotate(dt)
     end
 end
 
+function Asteroid:collide(other)
+    if (self.pos - other.pos):len() <= self.radius then
+        self.color = {255, 0, 0}
+        print "Collision"
+    end
+end
+
 function Asteroid:update(dt, world)
     local totalForce = vector(0, 0)
     for i, f in pairs(self._forces) do
@@ -67,6 +75,7 @@ function Asteroid:update(dt, world)
 
     self:move(dt, totalForce)
     self:rotate(dt)
+    self.color = {255, 255, 255}
 end
 
 function Asteroid:draw()
@@ -77,6 +86,7 @@ function Asteroid:draw()
     end
     table.insert(coordinates, coordinates[1])
     table.insert(coordinates, coordinates[2])
+    love.graphics.setColor(unpack(self.color))
     love.graphics.line(unpack(coordinates))
 end
 
@@ -98,6 +108,12 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
     end
     self._asteroids = asteroids
 end}
+
+function AsteroidField:collide(other)
+    for i, ast in pairs(self._asteroids) do
+        ast:collide(other)
+    end
+end
 
 function AsteroidField:update(dt, world)
     for i, ast in pairs(self._asteroids) do

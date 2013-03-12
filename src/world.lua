@@ -1,33 +1,22 @@
 local world
 
-local World = Class{function(self)
-    self._things = {}
+local World = Class{function(self, player, field)
+    self.player = player
+    self.field = field
 end}
 
-function World:register(thing)
-    table.insert(self._things, thing)
-end
-
 function World:update(dt)
-    for i, thing in pairs(self._things) do
-        thing:update(dt, world)
-    end
+    self.field:update(dt, self)
+    self.player:update(dt, self)
 end
 
 function World:draw()
-    for i, thing in pairs(self._things) do
-        thing:draw()
-    end
+    self.field:draw()
+    self.player:draw()
 end
 
-function World.instance()
-    if world == nil then
-        world = World()
-    end
-    return world
+function World:checkCollision(self, other)
 end
-
-
 
 return {
     World = World,

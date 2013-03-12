@@ -90,6 +90,7 @@ function Ship:draw()
     local shipX = self.pos.x % SCREEN.x
     local shipY = self.pos.y % SCREEN.y
 
+    love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.image, shipX, shipY, self.r,
         self.sx, self.sy, self.ox, self.oy, self.kx, self.ky)
 

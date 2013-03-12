@@ -37,6 +37,8 @@ end
 function Shot:update(dt, world)
     self:move(dt)
     self.age = self.age + dt
+
+    world.field:collide(self)
 end
 
 local Cannon = Class{function(self, mass, shotMass, force, cost, cooldown,
