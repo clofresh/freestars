@@ -44,6 +44,7 @@ function Ship:move(dt, force)
         a = force / self.mass
     end
     if self.lastDt ~= nil then
+        -- verlet integration. Gotta refactor into a generic function
         newPos = vector(
             self.pos.x
             + (self.pos.x - self.lastPos.x) * (dt / self.lastDt)

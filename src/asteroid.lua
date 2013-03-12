@@ -11,6 +11,12 @@ local Asteroid = Class{function(self, pos, velocity, spin, radius, numPoints,
         self.density = density
     end
     self.mass = self.density * self:area()
+
+    -- To draw the asteroid, we pick `numPoints` random angles on a circle
+    -- and sort the angles in ascending order. Later when we draw the
+    -- asteroid, we calculate the x, y coordinates of those angles
+    -- using the `pos` and `radius` values, then draw lines connecting those
+    -- points. Basically an asteroid is just a jaggy circle.
     local angles = {}
     while numPoints > 0 do
         table.insert(angles, math.random()*math.pi*2)
@@ -61,6 +67,11 @@ function Asteroid:rotate(dt)
 end
 
 function Asteroid:collide(other)
+    -- Take a shortcut and assume the hit area of the asteroid is a perfect
+    -- circle instead of trying to have pixel perfect collisions.
+    -- When you know it's a circle, all you need to know if there's a collision
+    -- is if the distance from the center of the asteroid to other is within a
+    -- radius of the circle.
     local distance = (fitInScreen(self.pos) - fitInScreen(other.pos)):len()
     if distance <= self.radius then
         self.color = {255, 0, 0}
@@ -81,6 +92,8 @@ end
 
 function Asteroid:draw()
     local coordinates = {}
+    -- Calculate the x, y coordinates of the points on the circle
+    -- form the angle, radius and pos, then connect the dots to draw it
     for i, angle in pairs(self._angles) do
         table.insert(coordinates, (math.cos(angle) * self.radius) + self.pos.x)
         table.insert(coordinates, (math.sin(angle) * self.radius) + self.pos.y)
@@ -97,12 +110,17 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
     self.h = h
     asteroids = {}
     while numAsteroids > 0 do
+        -- Pick a random point in the area as the asteroid's center
         local aPos = pos + vector(math.round(math.random() * w),
                                   math.round(math.random() * h))
+        -- Pick a random radius, at least 10 pixels
         local radius = (math.random() * maxRadius) + 10
+        -- Pick a random number of points on the asteroid based on the radius
         local numPoints = math.round(radius / 10) + 5
+        --- Pick a random velocity
         local velocity = vector((math.random() * 20) - 10,
                                 (math.random() * 20) - 10)
+        -- Pick a random spin
         local spin = (math.random() * 2 * math.pi) - (math.pi)
         table.insert(asteroids, Asteroid(aPos, velocity, spin, radius, numPoints))
         numAsteroids = numAsteroids - 1
