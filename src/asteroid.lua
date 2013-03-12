@@ -61,7 +61,8 @@ function Asteroid:rotate(dt)
 end
 
 function Asteroid:collide(other)
-    if (self.pos - other.pos):len() <= self.radius then
+    local distance = (fitInScreen(self.pos) - fitInScreen(other.pos)):len()
+    if distance <= self.radius then
         self.color = {255, 0, 0}
         print "Collision"
     end

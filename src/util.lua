@@ -6,3 +6,6 @@ function math.round(num, idp)
   return math.floor(num + 0.5)
 end
 
+function fitInScreen(vec)
+    return vector(vec.x % SCREEN.x, vec.y % SCREEN.y)
+end
