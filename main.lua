@@ -31,6 +31,7 @@ function love.load()
 end
 
 function love.update(dt)
+    field:update(dt)
     player:update(dt)
 end
 

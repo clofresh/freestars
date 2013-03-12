@@ -1,7 +1,16 @@
-local Asteroid = Class{function(self, pos, spin, radius, numPoints)
+local Asteroid = Class{function(self, pos, velocity, spin, radius, numPoints,
+                                density)
     self.pos = pos
+    self.lastDt = 1
+    self.lastPos = pos - velocity * self.lastDt
     self.spin = spin
     self.radius = radius
+    if density == nil then
+        self.density = 100
+    else
+        self.density = density
+    end
+    self.mass = self.density * self:area()
     local angles = {}
     while numPoints > 0 do
         table.insert(angles, math.random()*math.pi*2)
@@ -9,7 +18,56 @@ local Asteroid = Class{function(self, pos, spin, radius, numPoints)
     end
     table.sort(angles)
     self._angles = angles
+    self._forces = {}
 end}
+
+function Asteroid:area()
+    -- approximate its area as the area of the circle that circumscribes it
+    return math.pi * self.radius * self.radius
+end
+
+function Asteroid:move(dt, force)
+    local newPos, a
+    if force == nil then
+        a = vector(0, 0)
+    else
+        a = force / self.mass
+    end
+    if self.lastDt ~= nil then
+        newPos = vector(
+            self.pos.x
+            + (self.pos.x - self.lastPos.x) * (dt / self.lastDt)
+            + a.x * dt * dt,
+            self.pos.y
+            + (self.pos.y - self.lastPos.y) * (dt / self.lastDt)
+            + a.y * dt * dt
+        )
+    else
+        newPos = self.pos
+    end
+    self.lastDt = dt
+    self.lastPos = self.pos
+    self.pos = vector(newPos.x, newPos.y)
+end
+
+function Asteroid:rotate(dt)
+    local rotation = self.spin * dt
+    if rotation ~= 0 then
+        for i, a in pairs(self._angles) do
+            self._angles[i] = (a + rotation) % (2 * math.pi)
+        end
+    end
+end
+
+function Asteroid:update(dt)
+    local totalForce = vector(0, 0)
+    for i, f in pairs(self._forces) do
+        totalForce = totalForce + f
+    end
+
+    self:move(dt, totalForce)
+    self:rotate(dt)
+end
 
 function Asteroid:draw()
     local coordinates = {}
@@ -32,11 +90,20 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
                                   math.round(math.random() * h))
         local radius = (math.random() * maxRadius) + 10
         local numPoints = math.round(radius / 10) + 5
-        table.insert(asteroids, Asteroid(aPos, 0, radius, numPoints))
+        local velocity = vector((math.random() * 20) - 10,
+                                (math.random() * 20) - 10)
+        local spin = (math.random() * 2 * math.pi) - (math.pi)
+        table.insert(asteroids, Asteroid(aPos, velocity, spin, radius, numPoints))
         numAsteroids = numAsteroids - 1
     end
     self._asteroids = asteroids
 end}
+
+function AsteroidField:update(dt)
+    for i, ast in pairs(self._asteroids) do
+        ast:update(dt)
+    end
+end
 
 function AsteroidField:draw()
     for i, ast in pairs(self._asteroids) do
