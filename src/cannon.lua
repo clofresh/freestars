@@ -1,4 +1,4 @@
-local Shot = Class{function(self, image, pos, mass, r, launchForce)
+local Shot = Class{function(self, image, pos, mass, r, launchForce, damage)
     self.image = image
     self.pos = pos
     self.lastPos = pos:clone()
@@ -7,6 +7,7 @@ local Shot = Class{function(self, image, pos, mass, r, launchForce)
     self.r = r
     self.launchForce = launchForce
     self.age = 0
+    self.damage = damage
 end}
 
 function Shot:move(dt)
@@ -89,7 +90,7 @@ end
 
 function Cannon:shoot(dt, pos, r, dir, equipment)
     table.insert(self._shots, Shot(images.torpedo, pos:clone(),
-        self.shotMass, r, self.force * dir))
+        self.shotMass, r, self.force * dir, 20))
     self._shotCooldown = 0
     equipment.furnace:burnEnergy(self.cost)
 end

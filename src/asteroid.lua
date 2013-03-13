@@ -1,5 +1,5 @@
 local Asteroid = Class{function(self, pos, velocity, spin, radius, numPoints,
-                                density)
+                                life, density)
     self.pos = pos
     self.lastDt = 1
     self.lastPos = pos - velocity * self.lastDt
@@ -11,6 +11,11 @@ local Asteroid = Class{function(self, pos, velocity, spin, radius, numPoints,
         self.density = density
     end
     self.mass = self.density * self:area()
+    if life == nil then
+        self.life = self.mass / 100
+    else
+        self.life = life
+    end
 
     -- To draw the asteroid, we pick `numPoints` random angles on a circle
     -- and sort the angles in ascending order. Later when we draw the
@@ -75,8 +80,13 @@ function Asteroid:collide(other)
     local distance = (fitInScreen(self.pos) - fitInScreen(other.pos)):len()
     if distance <= self.radius then
         self.color = {255, 0, 0}
-        print "Collision"
+        self.life = self.life - other.damage
+        print(string.format("Collision. %d life left", self.life))
     end
+end
+
+function Asteroid:isDestroyed()
+    return self.life <= 0
 end
 
 function Asteroid:update(dt, world)
@@ -137,6 +147,9 @@ end
 function AsteroidField:update(dt, world)
     for i, ast in pairs(self._asteroids) do
         ast:update(dt, world)
+        if ast:isDestroyed() then
+            self._asteroids[i] = nil
+        end
     end
 end
 
