@@ -8,6 +8,7 @@ local Shot = Class{function(self, image, pos, mass, r, launchForce, damage)
     self.launchForce = launchForce
     self.age = 0
     self.damage = damage
+    self.radius = 1
 end}
 
 function Shot:move(dt)
@@ -39,7 +40,12 @@ function Shot:update(dt, world)
     self:move(dt)
     self.age = self.age + dt
 
-    world.field:collide(self)
+    local collided = world.field:checkCollision(self)
+    for i, asteroid in pairs(collided) do
+        asteroid.color = {255, 0, 0}
+        asteroid.life = asteroid.life - self.damage
+        print(string.format("Collision. %d life left", asteroid.life))
+    end
 end
 
 local Cannon = Class{function(self, mass, shotMass, force, cost, cooldown,

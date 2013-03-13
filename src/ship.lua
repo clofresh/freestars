@@ -13,6 +13,7 @@ local Ship = Class{function(self, image, pos, yaw, r, ox, oy, equipment)
     self.r = r
     self.ox = ox
     self.oy = oy
+    self.radius = 10
     self._forces = {}
 end}
 
@@ -79,6 +80,12 @@ function Ship:update(dt, world)
 
     self:move(dt, totalForce)
     self._forces = {}
+    local collided = world.field:checkCollision(self)
+    if #collided > 0 then
+        self.color = {255, 0, 0}
+    else
+        self.color = {255, 255, 255}
+    end
 end
 
 function Ship:draw()
@@ -90,11 +97,6 @@ function Ship:draw()
 
     local shipX = self.pos.x % SCREEN.x
     local shipY = self.pos.y % SCREEN.y
-
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.draw(self.image, shipX, shipY, self.r,
-        self.sx, self.sy, self.ox, self.oy, self.kx, self.ky)
-
 
     love.graphics.print(string.format(
 [[Memory: %dKB
@@ -108,6 +110,10 @@ R: %f
     self.equipment.furnace.capacity,
     self.r
     ), 1, 1)
+
+    love.graphics.setColor(unpack(self.color))
+    love.graphics.draw(self.image, shipX, shipY, self.r,
+        self.sx, self.sy, self.ox, self.oy, self.kx, self.ky)
 
 end
 

@@ -71,18 +71,14 @@ function Asteroid:rotate(dt)
     end
 end
 
-function Asteroid:collide(other)
+function Asteroid:checkCollision(other)
     -- Take a shortcut and assume the hit area of the asteroid is a perfect
     -- circle instead of trying to have pixel perfect collisions.
     -- When you know it's a circle, all you need to know if there's a collision
     -- is if the distance from the center of the asteroid to other is within a
     -- radius of the circle.
     local distance = (fitInScreen(self.pos) - fitInScreen(other.pos)):len()
-    if distance <= self.radius then
-        self.color = {255, 0, 0}
-        self.life = self.life - other.damage
-        print(string.format("Collision. %d life left", self.life))
-    end
+    return distance - other.radius <= self.radius 
 end
 
 function Asteroid:isDestroyed()
@@ -138,10 +134,14 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
     self._asteroids = asteroids
 end}
 
-function AsteroidField:collide(other)
+function AsteroidField:checkCollision(other)
+    local collided = {}
     for i, ast in pairs(self._asteroids) do
-        ast:collide(other)
+        if ast:checkCollision(other) then
+            table.insert(collided, ast)
+        end
     end
+    return collided
 end
 
 function AsteroidField:update(dt, world)
