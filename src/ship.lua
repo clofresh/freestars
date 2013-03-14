@@ -19,6 +19,7 @@ local Ship = Class{function(self, image, pos, yaw, r, ox, oy, equipment)
     self.oy = oy
     self.radius = 10
     self._forces = {}
+    self.color = {255, 255, 255}
 end}
 
 function Ship:turn(direction)
