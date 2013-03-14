@@ -1,3 +1,7 @@
+local Armor = Class{function(self, life, mass)
+    self.life = life
+    self.mass = mass
+end}
 
 local Ship = Class{function(self, image, pos, yaw, r, ox, oy, equipment)
     self.image = image
@@ -66,6 +70,10 @@ function Ship:applyForce(force)
     table.insert(self._forces, force)
 end
 
+function Ship:isDestroyed()
+    return self.equipment.armor.life <= 0
+end
+
 function Ship:update(dt, world)
     for name, eq in pairs(self.equipment) do
         if eq.update then
@@ -83,6 +91,7 @@ function Ship:update(dt, world)
     local collided = world.field:checkCollision(self)
     if #collided > 0 then
         self.color = {255, 0, 0}
+        self.equipment.armor.life = self.equipment.armor.life - 1
     else
         self.color = {255, 255, 255}
     end
@@ -101,12 +110,14 @@ function Ship:draw()
     love.graphics.print(string.format(
 [[Memory: %dKB
 Pos: (%d, %d)
+Armor: %f
 Energy: %f
 R: %f
 ]],
     math.floor(collectgarbage('count')),
     shipX,
     shipY,
+    self.equipment.armor.life,
     self.equipment.furnace.capacity,
     self.r
     ), 1, 1)
@@ -118,5 +129,6 @@ R: %f
 end
 
 return {
-    Ship = Ship,
+    Armor = Armor,
+    Ship  = Ship,
 }
