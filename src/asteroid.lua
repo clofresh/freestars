@@ -85,6 +85,16 @@ function Asteroid:isDestroyed()
     return self.life <= 0
 end
 
+function Asteroid:isOffScreen()
+    local topEdge, bottomEdge, leftEdge, rightEdge
+    topEdge    = self.pos.x - self.radius
+    bottomEdge = self.pos.x + self.radius
+    leftEdge   = self.pos.y - self.radius
+    rightEdge  = self.pos.y + self.radius
+    return bottomEdge < 0        or rightEdge < 0
+        or topEdge    > SCREEN.x or leftEdge  > SCREEN.y
+end
+
 function Asteroid:update(dt, world)
     local totalForce = vector(0, 0)
     for i, f in pairs(self._forces) do
@@ -110,15 +120,19 @@ function Asteroid:draw()
     love.graphics.line(unpack(coordinates))
 end
 
-local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
+local AsteroidField = Class{function(self, pos, w, h)
     self.pos = pos
     self.w = w
     self.h = h
+    self._asteroids = {}
+end}
+
+function AsteroidField:generateAsteroids(numAsteroids, maxRadius)
     asteroids = {}
     while numAsteroids > 0 do
         -- Pick a random point in the area as the asteroid's center
-        local aPos = pos + vector(math.round(math.random() * w),
-                                  math.round(math.random() * h))
+        local aPos = self.pos + vector(math.round(math.random() * self.w),
+                                       math.round(math.random() * self.h))
         -- Pick a random radius, at least 10 pixels
         local radius = (math.random() * maxRadius) + 10
         -- Pick a random number of points on the asteroid based on the radius
@@ -132,7 +146,7 @@ local AsteroidField = Class{function(self, pos, w, h, numAsteroids, maxRadius)
         numAsteroids = numAsteroids - 1
     end
     self._asteroids = asteroids
-end}
+end
 
 function AsteroidField:checkCollision(other)
     local collided = {}
@@ -145,9 +159,13 @@ function AsteroidField:checkCollision(other)
 end
 
 function AsteroidField:update(dt, world)
+    if #self._asteroids == 0 then
+        self:generateAsteroids(16, 50)
+    end
+
     for i, ast in pairs(self._asteroids) do
         ast:update(dt, world)
-        if ast:isDestroyed() then
+        if ast:isDestroyed() or ast:isOffScreen() then
             self._asteroids[i] = nil
         end
     end
